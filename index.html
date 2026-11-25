@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080d18" />
+  <meta name="description" content="An interactive scientific dashboard for exploring equilibrium and stability in autonomous first-order differential equations." />
+  <title>Interactive Stability Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script async src="https://cdn.jsdelivr.net/npm/mathjs@14.8.1/lib/browser/math.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script defer src="math-engine.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Interactive Stability Explorer home">
+      <span class="brand-mark"><span></span><span></span><span></span></span>
+      <span>STABILITY<span class="brand-light">LAB</span></span>
+    </a>
+    <nav class="topnav" aria-label="Main navigation">
+      <a href="#workspace">Workspace</a>
+      <a href="#comparison">Compare</a>
+      <a href="#learn">Learn</a>
+      <a href="#documentation">Documentation</a>
+    </nav>
+    <div class="topbar-right"><span class="live-dot"></span><span>LOCAL SIMULATION</span><span class="version-tag">v1.0</span></div>
+  </header>
+
+  <main id="top" class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> ENGINEERING MATHEMATICS · INTERACTIVE LAB</div>
+        <h1>Interactive <span>Stability</span><br />Explorer</h1>
+        <p class="hero-subtitle">Understand how one-dimensional dynamical systems evolve. Explore equilibrium points, inspect phase lines, and watch numerical solutions unfold in real time.</p>
+        <div class="hero-tags"><span><i class="tag-spark">✦</i> Autonomous ODEs</span><span>RK4 integration</span><span>Live stability analysis</span></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
+        <div class="orbit-core"><span>dx</span><small>dt</small></div>
+        <div class="orbit-node node-one"></div><div class="orbit-node node-two"></div><div class="orbit-node node-three"></div>
+        <div class="hero-art-label label-top">f(x) = 0</div><div class="hero-art-label label-bottom">x(t) → x*</div>
+      </div>
+    </section>
+
+    <section class="quick-stats" aria-label="Current analysis summary">
+      <div class="quick-stat"><span class="stat-icon cyan-icon">ƒ</span><div><small>ACTIVE MODEL</small><strong id="stat-model">dx/dt = −2x</strong></div></div>
+      <div class="quick-stat"><span class="stat-icon violet-icon">◎</span><div><small>EQUILIBRIA FOUND</small><strong id="stat-roots">1 point</strong></div></div>
+      <div class="quick-stat"><span class="stat-icon green-icon">↘</span><div><small>STABILITY PROFILE</small><strong id="stat-profile">Asymptotically stable</strong></div></div>
+      <div class="quick-stat"><span class="stat-icon amber-icon">◷</span><div><small>SIMULATION STATUS</small><strong id="stat-status">Ready to run</strong></div></div>
+    </section>
+
+    <section id="workspace" class="section-block">
+      <div class="section-heading">
+        <div><div class="section-kicker">01 / MODEL & SIMULATION</div><h2>Simulation workspace</h2><p>Choose a model or define your own autonomous system.</p></div>
+        <div class="equation-chip"><span class="chip-pulse"></span><span>dx / dt</span><b>=</b><span id="equation-chip-value">−2x</span></div>
+      </div>
+
+      <div class="workspace-grid">
+        <aside class="control-panel panel">
+          <div class="panel-heading"><div><span class="panel-index">A</span><h3>System controls</h3></div><span class="panel-subtle">INPUT</span></div>
+          <label class="field-label" for="preset-select">PREDEFINED EQUATIONS</label>
+          <select id="preset-select" class="select-control">
+            <option value="stable-linear">01 · Stable linear · −2x</option>
+            <option value="unstable-linear">02 · Unstable linear · 2x</option>
+            <option value="logistic">03 · Logistic · x(1−x)</option>
+            <option value="two-roots">04 · Two equilibria · x²−1</option>
+            <option value="three-roots">05 · Three equilibria · x(x−1)(x+1)</option>
+            <option value="custom">Custom equation</option>
+          </select>
+          <label class="field-label" for="equation-input">DEFINE f(x)</label>
+          <div class="equation-input-wrap"><span>f(x) =</span><input id="equation-input" class="equation-input" value="-2*x" spellcheck="false" autocomplete="off" aria-label="Differential equation expression" /><button id="apply-equation" class="icon-button" title="Apply equation" aria-label="Apply equation">↵</button></div>
+          <p class="field-hint">Use x, numbers, + − × ÷, ^, and functions like sin(x), exp(x), sqrt(x). Implicit multiplication is supported.</p>
+          <div id="preset-description" class="preset-description">A linear restoring system. Every trajectory moves toward the equilibrium at x = 0.</div>
+          <div id="equation-error" class="error-message" role="alert" hidden></div>
+          <div class="field-divider"></div>
+          <div class="control-row"><label class="field-label" for="initial-input">INITIAL CONDITION <span>x(0)</span></label><div class="value-pill" id="initial-value">2.00</div></div>
+          <input id="initial-input" class="range-control" type="range" min="-5" max="5" step="0.1" value="2" />
+          <div class="range-ends"><span>−5</span><span>0</span><span>+5</span></div>
+          <div class="control-row compact-row"><label class="field-label" for="duration-input">SIMULATION TIME <span>T</span></label><div class="value-pill" id="duration-value">8.0</div></div>
+          <input id="duration-input" class="range-control purple-range" type="range" min="2" max="20" step="0.5" value="8" />
+          <div class="range-ends"><span>2 s</span><span>20 s</span></div>
+          <div class="control-row compact-row"><label class="field-label" for="step-input">INTEGRATION STEP <span>Δt</span></label><div class="value-pill" id="step-value">0.02</div></div>
+          <input id="step-input" class="range-control cyan-range" type="range" min="0.005" max="0.1" step="0.005" value="0.02" />
+          <div class="range-ends"><span>0.005</span><span>0.100</span></div>
+          <div class="field-divider"></div>
+          <div class="button-row">
+            <button id="run-button" class="button button-primary"><span>▶</span> Start</button>
+            <button id="pause-button" class="button button-secondary" disabled>Ⅱ Pause</button>
+            <button id="reset-button" class="button button-ghost" title="Reset simulation">↺</button>
+          </div>
+          <div class="simulation-progress"><div class="progress-label"><span id="progress-state">READY</span><span id="progress-time">t = 0.00</span></div><div class="progress-track"><div id="progress-fill"></div></div></div>
+          <div class="state-readout"><span class="readout-dot"></span><div><small>CURRENT STATE x(t)</small><strong id="current-state">2.0000</strong></div><span id="readout-time">t = 0.00</span></div>
+        </aside>
+
+        <div class="visual-column">
+          <article class="panel solution-panel">
+            <div class="panel-heading"><div><span class="panel-index">B</span><div><h3>Solution curve</h3><p class="panel-description">State variable x over time t</p></div></div><div class="chart-legend"><span><i class="legend-line legend-cyan"></i>x(t)</span><span><i class="legend-line legend-dashed"></i>Equilibria</span></div></div>
+            <div class="chart-wrap"><canvas id="solution-chart" aria-label="Solution curve chart" role="img"></canvas><div id="chart-fallback" class="chart-fallback" hidden>Chart.js did not load. Check your connection and refresh the page.</div></div>
+            <div class="chart-footer"><span><b class="footer-dot cyan-dot"></b> Numerical solution · RK4</span><span id="chart-step-label">Δt = 0.02</span></div>
+          </article>
+          <div class="visual-bottom-grid">
+            <article class="panel phase-panel">
+              <div class="panel-heading"><div><span class="panel-index">C</span><div><h3>Phase line</h3><p class="panel-description">Direction of motion along x</p></div></div><span class="mini-label">1D FLOW</span></div>
+              <div id="phase-line" class="phase-canvas" aria-label="Phase line diagram"></div>
+              <div class="phase-legend"><span><i class="legend-dot stable-dot"></i>Attracting</span><span><i class="legend-dot unstable-dot"></i>Repelling</span><span><i class="legend-dot semi-dot"></i>Semistable</span></div>
+            </article>
+            <article class="panel vector-panel">
+              <div class="panel-heading"><div><span class="panel-index">D</span><div><h3>Direction field</h3><p class="panel-description">Velocity sign and magnitude</p></div></div><span class="mini-label">f(x)</span></div>
+              <div id="direction-field" class="direction-canvas" aria-label="Direction field visualization"></div>
+              <div class="vector-scale"><span>← decreasing x</span><span>increasing x →</span></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="analysis-section section-block">
+      <div class="section-heading compact-heading"><div><div class="section-kicker">02 / LIVE MATHEMATICAL ANALYSIS</div><h2>Equilibrium intelligence</h2><p>Every root of f(x) = 0 is tested using the derivative and local sign behavior.</p></div><span class="analysis-badge"><span class="live-dot"></span> LIVE ANALYSIS</span></div>
+      <div id="equilibrium-grid" class="equilibrium-grid"></div>
+      <div id="no-equilibria" class="empty-state" hidden><span>∅</span><h3>No equilibrium detected in the current search interval</h3><p>Try a wider domain or inspect the function for roots outside the displayed range.</p></div>
+      <div class="analysis-footnote"><span class="info-symbol">i</span><span>Root search interval: <b id="root-domain">−6 ≤ x ≤ 6</b>. Numerical root finding can miss roots outside this interval or roots near singularities.</span></div>
+    </section>
+
+    <section id="comparison" class="section-block comparison-section">
+      <div class="section-heading compact-heading"><div><div class="section-kicker">03 / SIDE-BY-SIDE STUDY</div><h2>Compare two systems</h2><p>Run two models from the same initial condition and compare their trajectories.</p></div><span class="comparison-icon">⇄</span></div>
+      <div class="panel comparison-panel">
+        <div class="compare-selectors">
+          <div class="compare-select-col"><label class="field-label" for="compare-a">SYSTEM A</label><select id="compare-a" class="select-control"><option value="stable-linear">−2x · Stable linear</option><option value="unstable-linear">2x · Unstable linear</option><option value="logistic">x(1−x) · Logistic</option><option value="two-roots">x²−1 · Two equilibria</option><option value="three-roots">x(x−1)(x+1) · Three equilibria</option></select></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-select-col"><label class="field-label" for="compare-b">SYSTEM B</label><select id="compare-b" class="select-control"><option value="unstable-linear">2x · Unstable linear</option><option value="stable-linear">−2x · Stable linear</option><option value="logistic">x(1−x) · Logistic</option><option value="two-roots">x²−1 · Two equilibria</option><option value="three-roots">x(x−1)(x+1) · Three equilibria</option></select></div>
+          <button id="compare-button" class="button button-primary compare-action">Compare systems <span>→</span></button>
+        </div>
+        <div id="comparison-results" class="comparison-results">
+          <div class="compare-summary" id="compare-summary"><span class="compare-summary-icon">↗</span><span>Select two systems and choose <b>Compare systems</b> to generate a side-by-side result.</span></div>
+          <div id="compare-chart-legend" class="compare-chart-legend"><span><i class="compare-line compare-line-a"></i>System A</span><span><i class="compare-line compare-line-b"></i>System B</span></div><div class="compare-chart-wrap"><canvas id="comparison-chart" aria-label="Comparison solution curves" role="img"></canvas></div>
+          <div class="compare-root-columns"><div id="compare-roots-a" class="compare-root-col"></div><div id="compare-roots-b" class="compare-root-col"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="learn" class="section-block learning-section">
+      <div class="section-heading compact-heading"><div><div class="section-kicker">04 / GUIDED LEARNING</div><h2>Understand the mathematics</h2><p>Follow the logic behind the stability label, one step at a time.</p></div><label class="toggle-control"><input id="educational-toggle" type="checkbox" checked /><span class="toggle-track"></span><span>Educational mode</span></label></div>
+      <div id="learning-content" class="learning-grid">
+        <div class="panel learning-panel">
+          <div class="learning-panel-head"><span class="learning-number">01</span><div><h3>Find equilibrium points</h3><span class="step-caption">Set the velocity equal to zero</span></div></div>
+          <div class="math-display">f(x*) = 0</div>
+          <p id="learning-step-1">For dx/dt = −2x, solve −2x = 0. The equilibrium is x* = 0.</p>
+          <div class="step-divider"></div>
+          <div class="learning-panel-head"><span class="learning-number">02</span><div><h3>Evaluate the derivative</h3><span class="step-caption">Linearization test</span></div></div>
+          <div class="math-display">f′(x*) <span class="math-muted">=</span> <span id="learning-derivative">−2</span></div>
+          <p id="learning-step-2">Differentiate f(x), then evaluate at the equilibrium. A negative derivative indicates local attraction.</p>
+          <div class="step-divider"></div>
+          <div class="learning-panel-head"><span class="learning-number">03</span><div><h3>Check the local flow</h3><span class="step-caption">Confirm with signs on both sides</span></div></div>
+          <div id="learning-signs" class="sign-check"><span>Left of x*</span><b class="sign-positive">f(x) &gt; 0</b><span>Right of x*</span><b class="sign-negative">f(x) &lt; 0</b></div>
+          <p id="learning-step-3">To the left, x increases; to the right, x decreases. Both sides move toward the equilibrium.</p>
+          <div class="step-divider"></div>
+          <div class="learning-panel-head"><span class="learning-number">04</span><div><h3>Conclude stability</h3><span class="step-caption">Interpret the trajectory</span></div></div>
+          <div id="learning-conclusion" class="learning-conclusion"><span class="conclusion-check">✓</span><div><b>Asymptotically stable</b><p>Nearby states approach x* as time increases.</p></div></div>
+        </div>
+        <div class="panel concept-panel">
+          <div class="concept-art"><div class="concept-axis"><span>+</span><span>0</span><span>−</span></div><svg viewBox="0 0 260 164" role="img" aria-label="Attracting trajectory diagram"><path d="M12 23 C60 23 74 45 116 82 C74 119 60 141 12 141" fill="none" stroke="#35d7e9" stroke-width="2.5" stroke-linecap="round"/><path d="M248 23 C200 23 186 45 144 82 C186 119 200 141 248 141" fill="none" stroke="#9b7cff" stroke-width="2.5" stroke-linecap="round"/><path d="M106 75 L116 82 L106 89" fill="none" stroke="#35d7e9" stroke-width="2.5"/><path d="M154 75 L144 82 L154 89" fill="none" stroke="#9b7cff" stroke-width="2.5"/><circle cx="130" cy="82" r="9" fill="#0b1423" stroke="#51e2be" stroke-width="3"/><circle cx="130" cy="82" r="3" fill="#51e2be"/></svg><div class="concept-caption">TRAJECTORIES APPROACH x*</div></div>
+          <div class="concept-copy"><span class="concept-kicker">KEY IDEA</span><h3>Stability is about what happens after a small disturbance.</h3><p>An equilibrium is not just a point where the system stops. Stability tells us whether nearby states return, remain nearby, or move farther away.</p></div>
+          <div class="concept-list"><div><span class="concept-dot dot-asym"></span><div><b>Asymptotically stable</b><p>Nearby solutions converge to the equilibrium.</p></div></div><div><span class="concept-dot dot-unstable"></span><div><b>Unstable</b><p>At least one nearby direction moves away.</p></div></div><div><span class="concept-dot dot-semi"></span><div><b>Semistable</b><p>Attraction occurs from one side only.</p></div></div></div>
+        </div>
+      </div>
+      <div id="learning-disabled" class="education-off" hidden>Educational mode is off. Turn it on to display the step-by-step derivation.</div>
+    </section>
+
+    <section class="section-block theory-section">
+      <div class="section-heading compact-heading"><div><div class="section-kicker">05 / MATHEMATICAL FOUNDATION</div><h2>Core concepts</h2><p>The ideas behind one-dimensional autonomous dynamical systems.</p></div></div>
+      <div class="theory-grid">
+        <article class="theory-card"><span class="theory-number">01</span><h3>Autonomous ODE</h3><div class="math-display small-math">dx/dt = f(x)</div><p>A first-order autonomous differential equation describes the rate of change of a state variable. The rate depends on x, not explicitly on time.</p></article>
+        <article class="theory-card"><span class="theory-number">02</span><h3>Equilibrium point</h3><div class="math-display small-math">f(x*) = 0</div><p>At an equilibrium, the derivative is zero. If the system starts exactly at x*, it remains there for all time.</p></article>
+        <article class="theory-card"><span class="theory-number">03</span><h3>Stable equilibrium</h3><div class="math-display small-math">|x(0)−x*| small</div><p>Lyapunov stability means sufficiently small initial disturbances stay close to the equilibrium for all future time.</p></article>
+        <article class="theory-card"><span class="theory-number">04</span><h3>Asymptotic stability</h3><div class="math-display small-math">lim x(t) = x*</div><p>An equilibrium is asymptotically stable when it is stable and nearby trajectories also converge to it as time tends to infinity.</p></article>
+      </div>
+      <div class="stability-rules panel"><div class="rules-intro"><span class="rules-icon">ƒ′</span><div><h3>Derivative test at an isolated equilibrium</h3><p>For a smooth one-dimensional system, the derivative gives a quick local test.</p></div></div><div class="rule-item"><span class="rule-symbol negative-symbol">f′(x*) &lt; 0</span><div><b>Asymptotically stable</b><small>Nearby trajectories move inward.</small></div></div><div class="rule-item"><span class="rule-symbol positive-symbol">f′(x*) &gt; 0</span><div><b>Unstable</b><small>Nearby trajectories move outward.</small></div></div><div class="rule-item"><span class="rule-symbol zero-symbol">f′(x*) = 0</span><div><b>Test is inconclusive</b><small>Use the sign of f(x) on both sides; the result may be asymptotically stable, unstable, semistable, or neutral.</small></div></div></div>
+    </section>
+
+    <section id="documentation" class="section-block documentation-section">
+      <div class="section-heading compact-heading"><div><div class="section-kicker">06 / PROJECT DOCUMENTATION</div><h2>How the explorer works</h2><p>Implementation notes, algorithms, assumptions, and limitations.</p></div><span class="doc-mark">DOCS</span></div>
+      <div class="docs-grid">
+        <article class="doc-card"><span class="doc-icon">⌘</span><h3>Architecture</h3><p>The application separates mathematical computation from presentation. <code>math-engine.js</code> parses equations, finds roots, classifies equilibria, and integrates trajectories. <code>app.js</code> manages controls, charts, and rendering. <code>styles.css</code> defines the interface.</p></article>
+        <article class="doc-card"><span class="doc-icon">∫</span><h3>Numerical methods</h3><p>Equilibria are estimated by scanning a finite interval, applying bisection to sign changes, and checking local minima of |f| for possible repeated roots. The derivative is estimated with a central difference. Time evolution uses fourth-order Runge–Kutta (RK4).</p></article>
+        <article class="doc-card"><span class="doc-icon">⌁</span><h3>Safe expressions</h3><p>Math.js parses the user's expression. The abstract syntax tree is checked against an allow-list of numeric constants, x, arithmetic operators, and approved mathematical functions before compilation. JavaScript <code>eval()</code> is not used.</p></article>
+        <article class="doc-card"><span class="doc-icon">◷</span><h3>Simulation workflow</h3><p>The RK4 solver precomputes the trajectory for the selected time horizon and step size. The animation reveals stored samples progressively. Reset returns to the initial state; pause and resume control playback without changing the computed solution.</p></article>
+      </div>
+      <div class="rk4-method panel"><div><span class="concept-kicker">NUMERICAL INTEGRATION</span><h3>Fourth-order Runge–Kutta update</h3><p>Four slope estimates are combined at each time step to approximate the next state.</p></div><div class="rk4-formula"><span>k₁ = f(xₙ)</span><span>k₂ = f(xₙ + Δt·k₁/2)</span><span>k₃ = f(xₙ + Δt·k₂/2)</span><span>k₄ = f(xₙ + Δt·k₃)</span><b>xₙ₊₁ = xₙ + (Δt/6)(k₁ + 2k₂ + 2k₃ + k₄)</b></div></div>
+      <div class="limitations-panel panel"><div class="limitations-heading"><span>!</span><div><h3>Assumptions & limitations</h3><p>Read these before interpreting a numerical result as a proof.</p></div></div><ul><li>Root detection is numerical and restricted to the displayed interval. Very close roots, roots at singularities, highly oscillatory functions, and difficult repeated roots may be missed or approximated inaccurately.</li><li>The derivative test assumes a sufficiently smooth function near the equilibrium. When f′(x*) is close to zero, the sign test is used; a truly neutral or non-isolated equilibrium may require a more careful mathematical argument.</li><li>RK4 is an explicit numerical method. Very large time steps, rapidly growing solutions, or stiff equations can produce inaccurate results. Reduce Δt and compare results to check numerical sensitivity.</li><li>The interface models a scalar, autonomous, continuous-time system dx/dt = f(x). It does not analyze systems of coupled ODEs, explicit time dependence, or discrete-time maps.</li><li>External libraries are loaded from a CDN, so an internet connection is required when opening the app for the first time. Once loaded, all equation analysis and simulation run locally in the browser; no backend is used.</li></ul></div>
+      <div class="project-meta"><span>INTERACTIVE STABILITY EXPLORER</span><span>Undergraduate Engineering Mathematics · Mathematics & Computing</span><span>Built for learning and demonstration</span></div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="brand footer-brand"><span class="brand-mark"><span></span><span></span><span></span></span><span>STABILITY<span class="brand-light">LAB</span></span></div><span>Explore the flow. Understand the equilibrium.</span><a href="#top">Back to top ↑</a></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
